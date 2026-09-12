@@ -1,33 +1,41 @@
-# Noite da Pizza 🍷
+# Noite da Pizza 🍕🍷
 
-App de uma noite entre amigos: cadastro com foto, um voto por nome, troca de voto e ranking com empate. HTML + CSS + JavaScript em `index.html`, sem build, npm ou framework. Precisa de internet; estar no mesmo Wi-Fi não substitui o acesso ao Supabase e ao CDN.
+App para uma noite entre amigos, em um único `index.html`: HTML, CSS e JavaScript puro, Supabase pelo CDN e GitHub Pages, sem build, framework ou npm.
 
-## Colocar no ar
+## Como usar a versão 2
 
-1. **Supabase:** crie um projeto grátis em [supabase.com](https://supabase.com/dashboard). Guarde a senha do banco; ela não vai no HTML.
-2. **Banco:** abra **SQL Editor → New query**, cole todo o arquivo `supabase.sql` e execute **Run**. O script cria tabelas, permissões anônimas, bucket e Realtime. Pode ser executado novamente.
-3. **Fotos:** em **Storage**, confirme o bucket `fotos` como **Public**. O SQL já o cria. Se optar por criar pelo painel antes de rodar o SQL, use exatamente `fotos`, marque público, limite de 5 MB e MIME `image/jpeg`. Execute o SQL mesmo assim para criar a política de upload anônimo. O app converte a foto para JPEG, lado máximo de 800 px e qualidade 0.6. Fotos opcionais; formato não suportado pelo navegador pede outra imagem.
-4. **Chaves:** no projeto, copie **Project URL** e a chave pública **anon** (em Settings → API / API Keys, seção de chaves legadas, ou no diálogo Connect). No início do script próprio de `index.html`, substitua:
-   ```js
-   const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-   const SUPABASE_ANON_KEY = 'SUA-CHAVE-ANON';
-   ```
-   A anon key é pública e pode ficar no HTML. **Nunca cole `service_role`, chave secreta ou senha do banco.**
-5. **GitHub Pages:** crie um repositório público novo chamado `noite-da-pizza`. Envie `index.html`, `supabase.sql` e `README.md` para a raiz da branch `main`. Em **Settings → Pages → Build and deployment**, selecione **Deploy from a branch**, branch **main**, pasta **/(root)** e salve. Abra a URL exibida pelo GitHub, normalmente `https://SEU-USUARIO.github.io/noite-da-pizza/`. Não há comando de build.
-6. **Teste com a turma:** abra em dois celulares, entre com nomes diferentes, cadastre duas pizzas (uma com foto), vote e troque de voto. O resultado só aparece após votar. Faça um voto em cada pizza para conferir o empate. Recarregue para verificar a recuperação do nome e do voto. O botão Atualizar funciona mesmo sem Realtime.
+1. Entre com seu nome. Quem entra passa a aparecer na lista de participantes. Use sobrenome se houver homônimos; maiúsculas e espaços extras não criam outro usuário.
+2. Cadastre a pizza com nome, casal e, opcionalmente, ingredientes e foto. A imagem é convertida para JPEG de até 800 px de lado, qualidade 0.6. Quem cadastra fica automaticamente vinculado à pizza.
+3. Em cada pizza, **Vincular participantes** permite marcar quem a fez, incluindo o outro integrante do casal. Nas pizzas já existentes, os vínculos precisam ser feitos manualmente. A pessoa precisa ter entrado no app para aparecer na lista.
+4. Em **Meu ranking**, escolha até quatro pizzas diferentes. A primeira vale **5 pontos**, a segunda **4**, a terceira **3** e a quarta **2**. Pode salvar menos de quatro quando houver poucas pizzas. As posições se compactam ao remover uma escolha. Toque em **Salvar meu ranking** para confirmar ou trocar as escolhas; mudanças no formulário ainda não contam.
+5. Uma pessoa vinculada à pizza não pode colocá-la no próprio ranking. A interface e um trigger do banco aplicam a regra. Se o vínculo for feito depois de votar, essa pizza sai do ranking da pessoa e as seguintes sobem de posição automaticamente.
+6. Depois de salvar um ranking não vazio, **Revelar o resultado** mostra a soma geral dos pontos, as barras proporcionais e a líder. Empates em pontos continuam empatados, sem desempate arbitrário. O resultado é parcial enquanto a turma pode alterar suas escolhas.
+7. **Excluir pizza** pede confirmação, remove a pizza dos rankings e promove as posições seguintes. Depois, tenta apagar a foto do Storage. Se só essa última etapa falhar, a exclusão da pizza continua válida e o app avisa.
 
-## Como usar
+O botão **Atualizar**, o Realtime e o retorno à aba sincronizam a mesa. Alterações ainda não salvas no ranking são preservadas quando possível; escolhas que ficaram inválidas são removidas com aviso. **Limpar escolhas** só retira os pontos depois de salvar o ranking vazio.
 
-- Cada pessoa usa o próprio nome; homônimos devem usar sobrenome. Maiúsculas e espaços repetidos são normalizados (ex.: ` ANA ` e `Ana` têm o mesmo voto). Acentos continuam diferentes.
-- O nome fica no localStorage deste navegador; o voto fica no banco. Entrar com o mesmo nome em outro celular recupera e pode trocar esse voto.
-- Cadastre a pizza do casal apenas uma vez. O cadastro preserva os campos quando há falha. Tentar novamente na mesma página reutiliza o id da pizza.
-- O ranking mostra percentuais do total de votos, inclui pizzas sem votos e anuncia empate explicitamente. É parcial: não há encerramento automático. A turma combina quando parar de votar e como resolver o empate pelo vinho.
-- O Realtime atualiza pizzas, votos e resultado revelado. Se desconectar, use **Atualizar**. Ao retornar à aba ou recuperar a internet, o app busca os dados novamente.
+## Configurar do zero
 
-## Limites deste combinado
+1. Crie um projeto grátis em [Supabase](https://supabase.com/dashboard).
+2. No SQL Editor, execute **supabase.sql** e depois **atualizacao-ranking.sql**, nesta ordem. O primeiro é a base v1; o segundo instala a versão atual. Não execute novamente a base v1 depois da atualização, pois ela reabre as permissões dos votos antigos.
+3. Em Storage, confirme o bucket público **fotos** (criado pelo SQL), com JPEG e limite de 5 MB.
+4. No início do JavaScript em `index.html`, configure `SUPABASE_URL` e `SUPABASE_ANON_KEY`, usando a URL e a chave pública `anon` do seu projeto. Nunca use `service_role`, secret key ou senha do banco.
+5. Envie os arquivos ao GitHub. Em **Settings → Pages**, selecione **Deploy from a branch → main → /(root)** e salve. Não há build; o app precisa de internet.
 
-Sem login, o nome é um acordo entre amigos, não autenticação: alguém pode usar outro nome. As policies abertas solicitadas permitem consultar e alterar pizzas e votos via API. Esconder o resultado antes do voto é apenas uma regra de interface; o banco permite a leitura. Use somente para esta brincadeira e não inclua dados sensíveis. Falhas de cadastro ou troca de foto podem deixar imagens sem uso no bucket; ao final, exclua o projeto Supabase se não quiser manter os dados.
+## Atualizar a instalação existente
 
-O projeto é entregue com placeholders: a conexão real e a publicação dependem de configurar seu Supabase e seu GitHub. Nenhum dado de demonstração é enviado ao banco.
+Aplique somente **atualizacao-ranking.sql** e depois publique o novo `index.html`. As pizzas existentes permanecem. O script adiciona `pizzas.autores`, `participantes` e `rankings`; converte eventuais votos v1 em primeira escolha (5 pontos) e bloqueia gravações anônimas na tabela legada `votos`. Não reaplique a atualização para recuperar votos apagados: ela é uma migração, não rotina de operação.
 
-Referências: [Supabase upsert](https://supabase.com/docs/reference/javascript/upsert), [upload de fotos](https://supabase.com/docs/reference/javascript/storage-from-upload), [Realtime](https://supabase.com/docs/guides/realtime/postgres-changes), [publicação no GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
+Após publicar, peça à turma para recarregar a página. Clientes antigos precisam da versão nova para votar. O script usa funções `security invoker`, RLS e um lock transacional por mesa para serializar votos, vínculos e exclusões. Os pontos são derivados das posições, sem pontuação arbitrária enviada pelo cliente.
+
+## Acesso entre amigos
+
+A identificação continua sendo por nome, sem senha ou login. **Qualquer visitante pode excluir pizzas, alterar vínculos e rankings pela API**; os botões estão disponíveis a todos. A confirmação de exclusão protege contra toque acidental, não é uma permissão administrativa. Trocar de nome ou desvincular um participante permite contornar a identidade combinada. O bloqueio de voto próprio vale para os vínculos atualmente registrados. Fotos e dados são públicos; o resultado oculto antes do ranking é uma regra visual. Use apenas para esta brincadeira e desative o projeto ao final se não quiser manter os dados.
+
+## Verificação
+
+- `node tests/ranking.cjs`: teste de lógica com DOM e Supabase simulados, sem instalar dependências. Cobre pontos, empate, escolhas inválidas, edição/salvamento, falhas, exclusão cancelada, limpeza e vínculos. Node é usado apenas para desenvolvimento, não pelo app.
+- `tests/banco-ranking.sql`: verificações transacionais sob a role `anon`, com fixtures temporárias e `ROLLBACK`; aplicar somente depois da migração aprovada. Cobre voto próprio, duplicidade, limite, mudança de vínculo e exclusão.
+- A migração e os testes no banco aguardam aprovação das permissões de exclusão e alteração anônima. A inspeção visual ficou pendente porque o download do navegador de testes não foi concluído.
+
+Referências: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [upsert](https://supabase.com/docs/reference/javascript/upsert), [Realtime](https://supabase.com/docs/guides/realtime/postgres-changes).
